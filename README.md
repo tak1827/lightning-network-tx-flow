@@ -14,3 +14,12 @@ Blog Post: [Simplified code of Bitcoin Lightning Network part2 — Spend Bre
 ### Execute flow
 `node flow.js`<br>
 If I puck pack all transactions flows into flow.js, it will hard to read. So I divide into several branches. Please checkout.
+
+
+## Spend Breach Remedy
+This branch is for spending Breach Remedy. To refer my blog post for further information.<br>
+
+Blog Post: [Simplified code of Bitcoin Lightning Network part2 — Spend Breach Remedy](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part2-spend-breach-remedy-997de8a21f29)
+<br>
+
+![alt Fig9 of white paper](Fig9.png)
