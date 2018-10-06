@@ -1,0 +1,22 @@
+{
+  "name": "lightning-network-tx-flow",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tak1827/lightning-network-tx-flow.git"
+  },
+  "author": "tak1827",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tak1827/lightning-network-tx-flow/issues"
+  },
+  "homepage": "https://github.com/tak1827/lightning-network-tx-flow#readme",
+  "dependencies": {
+    "crypto-js": "^3.1.9-1",
+    "elliptic": "^6.4.1"
+  }
+}
