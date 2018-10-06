@@ -12,3 +12,11 @@ Blog Post: [Simplified code of Bitcoin Lightning Network — Spend Revocable
 ### Execute flow
 `node flow.js`<br>
 If I puck pack all transactions flows into flow.js, it will hard to read. So I divide into several branches. Please checkout.
+
+## Spend Revocable Delivery 
+This branch is for spending Revocable Delivery. To refer my blog post for further information.<br>
+
+Blog Post: [Simplified code of Bitcoin Lightning Network — Spend Revocable Delivery](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-spend-revocable-delivery-90e50f0256d5)
+<br>
+
+![alt Fig5 of white paper](Fig5.png)
