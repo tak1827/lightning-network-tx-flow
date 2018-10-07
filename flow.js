@@ -576,75 +576,264 @@ C2b = signTx(C2b, AliceKeys[1]);
 
 
 /*************************************
- 12. Spend C2b
+ 12. Build C3a and C3b (No sign)
+**************************************/
+let C3a = new Transaction(
+  [
+    new TxIn(
+      fTxAH, 
+      0, 
+      { 
+        type: 'MULTI',
+        sig: [ 
+          redeemScript.pubKeyHashs[0], 
+          redeemScript.pubKeyHashs[1] 
+        ],
+        redeemScript
+      }
+    ),
+    new TxIn(
+      fTxBH,
+      0, 
+      { 
+        type: 'MULTI',
+        sig: [ 
+          redeemScript.pubKeyHashs[0], 
+          redeemScript.pubKeyHashs[1] 
+        ],
+        redeemScript
+      }
+    )
+  ],
+  [
+    new TxOut(
+      40000000, 
+      { 
+        type: 'RSMS',
+        pubKeyHash: [ 
+          getPubKeyHash(AliceKeys[7]), 
+          getPubKeyHash(BobKeys[7]) 
+        ]
+      }
+    ),
+    new TxOut(
+      60000000, // Bob receive 0.1 BTC more than Alice
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(BobKeys[7])
+      }
+    )
+  ]
+)
+
+let C3b = new Transaction(
+  [
+    new TxIn(
+      fTxAH, 
+      0, 
+      { 
+        type: 'MULTI',
+        sig: [ 
+          redeemScript.pubKeyHashs[0], 
+          redeemScript.pubKeyHashs[1] 
+        ],
+        redeemScript
+      }
+    ),
+    new TxIn(
+      fTxBH,
+      0, 
+      { 
+        type: 'MULTI',
+        sig: [ 
+          redeemScript.pubKeyHashs[0], 
+          redeemScript.pubKeyHashs[1] 
+        ],
+        redeemScript
+      }
+    )
+  ],
+  [
+    new TxOut(
+      40000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(AliceKeys[7])
+      }
+    ),
+    new TxOut(
+      60000000, // Bob receive 0.1 BTC more than Alice
+      { 
+        type: 'RSMS',
+        pubKeyHash: [ 
+          getPubKeyHash(AliceKeys[7]), 
+          getPubKeyHash(BobKeys[7]) 
+        ]
+      }
+    )
+
+  ]
+)
+
+
+/*************************************
+ 13. Build RD3a and RD3b
+**************************************/
+// Skip. Please refer to 'spend-RD' branch
+
+
+/**************************************
+ 14. Exchange signature of C3a and C3b
+***************************************/
+
+// Alice hand over C3a to Bob, and let him sign
+C3a = signTx(C3a, BobKeys[1]);
+
+// Bob hand over C3a to Alice, and let her sign
+C3b = signTx(C3b, AliceKeys[1]);
+
+
+/**************************************
+ 15. Disclose private keys 
+***************************************/
+// Alice disclose private key 4, 5 to Bob
+// Bob disclose private key 4, 5 to Alice
+
+// For Alice
+// She can broadcast BR2b and HBR1b and HEBR1b using disclosed keys.
+
+// For Bob
+// He can broadcast BR2a and HBR1a and HEBR1a using disclosed keys.
+
+
+/*************************************
+ 16. Spend C2b
 **************************************/
 
 // Sign by himself(Bob)
 C2b = signTx(C2b, BobKeys[1]);
 
-// Validate transaction
 validateTx(C2b, Blocks);
 
 // Mine block as adding transactions
 Blocks = mineBlock(Blocks, createNewBlock([C2b], Blocks));
 
 
-// /*************************************
-//  13. Spend HTD1b
-// **************************************/
+/*************************************
+ 17. Build and Spend D2b
+**************************************/
+const hashC2b = calculateTxHash(C2b);
 
-// // Set C2b transaction hash
-// HTD1b.txIns[0].txPrev = calculateTxHash(C2b);
+let D2b = new Transaction(
+  [
+    new TxIn(
+      hashC2b, 
+      0, 
+      { 
+        type: 'SINGLE',
+        sig: [ 
+          getPubKeyHash(AliceKeys[4]) 
+        ],
+      }
+    )
+  ],
+  [
+    new TxOut(
+      40000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(AliceKeys[8])
+      }
+    )
+  ]
+)
 
-// HTD1b = signTx(HTD1b, AliceKeys[4]);
+D2b = signTx(D2b, AliceKeys[4]);
 
-// Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-// Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-// Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+validateTx(D2b, Blocks);
 
-// validateTx(HTD1b, Blocks);
-
-// Blocks.push( createNewBlock([HTD1b], Blocks) );
+Blocks = mineBlock(Blocks, createNewBlock([D2b], Blocks));
 
 
 /*************************************
- 13. Spend HE1b
+ 18. Build and Spend BR2b
 **************************************/
+const c2bHash = calculateTxHash(C2b);
 
-// Set C2b transaction hash
-HE1b.txIns[0].txPrev = calculateTxHash(C2b);
+let BR2b = new Transaction(
+  [
+    new TxIn(
+      c2bHash,
+      1, 
+      { 
+        type: 'BR',
+        sig: [ 
+          getPubKeyHash(AliceKeys[4]), 
+          getPubKeyHash(BobKeys[4]) 
+        ],
+      }
+    )
+  ],
+  [
+    new TxOut(
+      40000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(AliceKeys[8]) // For Alice
+      }
+    )
+  ]
+)
 
-HE1b = signTx(HE1b, BobKeys[4]);
+// Alice can sign, because she know Bob's private key.
+BR2b = signTx(BR2b, BobKeys[4]);
 
-validateTx(HE1b, Blocks);
+// Inherently, this BTC is for Bob, but now belong to Alice.
+// Bob lose for his breach.
+BR2b = signTx(BR2b, AliceKeys[4]);
 
-Blocks.push( createNewBlock([HE1b], Blocks) );
+validateTx(BR2b, Blocks);
 
+Blocks.push( createNewBlock([BR2b], Blocks) );
 
 
 /*************************************
- 14. Spend HERD1b
+ 19. Build and Spend HBR1b
 **************************************/
+let HBR1b = new Transaction(
+  [
+    new TxIn(
+      c2bHash,
+      2, 
+      { 
+        type: 'BR',
+        sig: [ 
+          getPubKeyHash(AliceKeys[4]), 
+          getPubKeyHash(BobKeys[4]) 
+        ],
+      }
+    )
+  ],
+  [
+    new TxOut(
+      10000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(AliceKeys[8]) // For Alice
+      }
+    )
+  ]
+)
 
-// Set HE1b transaction hash
-HERD1b.txIns[0].txPrev = calculateTxHash(HE1b);
+// Alice can sign, because she know Bob's private key.
+HBR1b = signTx(HBR1b, BobKeys[4]);
 
-HERD1b = signTx(HERD1b, BobKeys[5]);
+// Inherently, this BTC is for Bob, but now belong to Alice.
+// Bob lose for his breach.
+HBR1b = signTx(HBR1b, AliceKeys[4]);
 
-// Wait 10 confirmations for time lock
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
-Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+validateTx(HBR1b, Blocks);
 
-validateTx(HERD1b, Blocks);
-
-Blocks.push( createNewBlock([HERD1b], Blocks) );
+Blocks.push( createNewBlock([HBR1b], Blocks) );
 
 // console.log(JSON.stringify(HERD1b))

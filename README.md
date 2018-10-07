@@ -8,6 +8,8 @@ Blog Post: [Simplified code of Bitcoin Lightning Network part2 — Spend Bre
 
 Blog Post: [Simplified code of Bitcoin Lightning Network part3 — Spend HTLC Execution Revocable Delivery](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part3-spend-htlc-execution-revocable-delivery-49991e3cfe34)
 
+Blog Post: [Simplified code of Bitcoin Lightning Network part4 — Spend HTLC Breach Remedy](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part4-spend-htlc-breach-remedy-61ebc5587fc4)
+
 ## Get started
 
 ### Run install command
@@ -16,3 +18,8 @@ Blog Post: [Simplified code of Bitcoin Lightning Network part3 — Spend HTL
 ### Execute flow
 `node flow.js`<br>
 If I puck pack all transactions flows into flow.js, it will hard to read. So I divide into several branches. Please checkout.
+
+Blog Post: [Simplified code of Bitcoin Lightning Network part4 — Spend HTLC Breach Remedy](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part4-spend-htlc-breach-remedy-61ebc5587fc4)
+<br>
+
+![alt Fig13+14 of white paper](Fig13+14.png)
