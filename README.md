@@ -17,6 +17,8 @@ Blog Post: [Simplified code of Bitcoin Lightning Network part3 — Spend HTL
 `node flow.js`<br>
 If I puck pack all transactions flows into flow.js, it will hard to read. So I divide into several branches. Please checkout.
 
+## Spend HTLC Execution Revocable Delivery
+This branch is for spending HTLC Execution Revocable Delivery. To refer my blog post for further information.<br>
 
 Blog Post: [Simplified code of Bitcoin Lightning Network part3 — Spend HTLC Execution Revocable Delivery](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part3-spend-htlc-execution-revocable-delivery-49991e3cfe34)
 <br>
