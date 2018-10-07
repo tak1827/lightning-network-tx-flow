@@ -19,6 +19,9 @@ Blog Post: [Simplified code of Bitcoin Lightning Network part4 — Spend HTL
 `node flow.js`<br>
 If I puck pack all transactions flows into flow.js, it will hard to read. So I divide into several branches. Please checkout.
 
+## Spend HTLC Breach Remedy
+This branch is for spending HTLC Breach Remedy. To refer my blog post for further information.<br>
+
 Blog Post: [Simplified code of Bitcoin Lightning Network part4 — Spend HTLC Breach Remedy](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part4-spend-htlc-breach-remedy-61ebc5587fc4)
 <br>
 
