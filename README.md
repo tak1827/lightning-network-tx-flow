@@ -6,6 +6,8 @@ Blog Post: [Simplified code of Bitcoin Lightning Network — Spend Revocable
 
 Blog Post: [Simplified code of Bitcoin Lightning Network part2 — Spend Breach Remedy](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part2-spend-breach-remedy-997de8a21f29)
 
+Blog Post: [Simplified code of Bitcoin Lightning Network part3 — Spend HTLC Execution Revocable Delivery](https://medium.com/@t.tak/simplified-code-of-bitcoin-lightning-network-part3-spend-htlc-execution-revocable-delivery-49991e3cfe34)
+
 ## Get started
 
 ### Run install command

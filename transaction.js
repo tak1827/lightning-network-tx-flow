@@ -84,7 +84,7 @@ function buildScriptSig(scriptSig, txHash, privateKey) {
       redeemScript: scriptSig.redeemScript
     };
 
-  } else if (scriptSig.type === 'RD') {
+  } else if (scriptSig.type === 'RD' || scriptSig.type === 'HTLCT') {
     return {
       type: scriptSig.type,
       sig: scriptSig.sig.map(sig => {
@@ -110,6 +110,20 @@ function buildScriptSig(scriptSig, txHash, privateKey) {
           : sig
       })
     };
+  
+  } else if (scriptSig.type === 'HTLCE') {
+    return {
+      type: scriptSig.type,
+      sig: scriptSig.sig.map(sig => {
+        return sig === getPubKeyHash(privateKey)
+          ? {
+              signature: toHexString(key.sign(txHash).toDER()),
+              pubKey: getPubKey(privateKey),
+            }
+          : sig
+      }),
+      preimageR: scriptSig.preimageR
+    };
   }
 }
 
@@ -131,7 +145,12 @@ function signTx(tx, privateKey) {
   const unsignedTx = buildUnsignTx(tx);
 
   // Parent transaction have not yet spent so that keep txIns empty then calculate hash
-  if (tx.txIns[0].scriptSig.type === 'RD' || tx.txIns[0].scriptSig.type === 'BR') {
+  if (
+      tx.txIns[0].scriptSig.type === 'RD' || 
+      tx.txIns[0].scriptSig.type === 'BR' || 
+      tx.txIns[0].scriptSig.type === 'HTLCT' || 
+      tx.txIns[0].scriptSig.type === 'HTLCE'
+  ) {
     unsignedTx.txIns = [];
   }
 
@@ -236,7 +255,7 @@ function validateTxIn(txIn, txNow, txPrev, Blocks) {
       "signature is not enough " + JSON.stringify(txIn)
     )
 
-  } else if (txIn.scriptSig.type === 'RD') {
+  } else if (txIn.scriptSig.type === 'RD' || txIn.scriptSig.type === 'HTLCT') {
 
     const blockHeightNow = Blocks.length;
     const lockedBlockHeigh = getBlockHeight(txPrev, Blocks) + 
@@ -262,6 +281,21 @@ function validateTxIn(txIn, txNow, txPrev, Blocks) {
       )
     });
     
+  } else if (txIn.scriptSig.type === 'HTLCE') {
+
+    const preimageR = txIn.scriptSig.preimageR;
+    const preimageH = txPrev.txOuts[txIn.index].scriptPubKey.preimageH;
+
+    Assert.equal(getPubKey(preimageR), preimageH,
+      "preimageR is wrong " + JSON.stringify(txIn)
+    )
+
+    txIn.scriptSig.sig.map((sig, i) => {
+      const pubKeyHash = calculatePubKeyHash(sig.pubKey);
+      Assert.equal(pubKeyHash, txPrev.txOuts[txIn.index].scriptPubKey.pubKeyHash[i],
+        "txIn.scriptSig don't correspond with pubKeyHash " + JSON.stringify(txIn)
+      )
+    }); 
   }
 
   verifySig(txIn.scriptSig.type, txNow, txIn.scriptSig.sig);

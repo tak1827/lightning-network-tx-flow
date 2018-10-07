@@ -1,6 +1,6 @@
 const { BlockChain, createNewBlock, mineBlock } = require('./block');
 const { Transaction, TxIn, TxOut, calculateTxHash, signTx, validateTx } = require('./transaction');
-const { AliceKeys, BobKeys, getPubKeyHash, redeemScript, redeemScriptHash } = require('./wallet');
+const { AliceKeys, BobKeys, getPubKeyHash, redeemScript, redeemScriptHash, generatePrivateKey, getPubKey } = require('./wallet');
 
 // Create blockchain
 let Blocks = Object.assign([], BlockChain);
@@ -232,6 +232,13 @@ C1b = signTx(C1b, AliceKeys[1]);
 /*********************************
  5. Build C2a and C2b (No sign)
 **********************************/
+
+// Use private key as preimage R
+const preimageR = generatePrivateKey();
+
+// Preimage H is public key
+const preimageH = getPubKey(preimageR);
+
 let C2a = new Transaction(
   [
     new TxIn( // This is same as C1a
@@ -271,10 +278,21 @@ let C2a = new Transaction(
       }
     ),
     new TxOut(
-      60000000, 
+      50000000, 
       { 
         type: 'NORMAL',
         pubKeyHash: getPubKeyHash(BobKeys[4])
+      }
+    ),
+    new TxOut(
+      10000000, 
+      { 
+        type: 'HTLC',
+        pubKeyHash: [
+          getPubKeyHash(AliceKeys[4]),
+          getPubKeyHash(BobKeys[4])
+        ],
+        preimageH // Alice provide H, Bob need to know R
       }
     )
   ]
@@ -324,6 +342,17 @@ let C2b = new Transaction(
           getPubKeyHash(BobKeys[4]) 
         ]
       }
+    ),
+    new TxOut(
+      10000000, 
+      { 
+        type: 'HTLC',
+        pubKeyHash: [
+          getPubKeyHash(AliceKeys[4]),
+          getPubKeyHash(BobKeys[4])
+        ],
+        preimageH // Bob provide H, Alice need to know R
+      }
     )
   ]
 )
@@ -336,9 +365,202 @@ let C2b = new Transaction(
 // So, let me skip
 
 
-/*************************************
- 7. Exchange signature of C2a and C2b
-**************************************/
+/*********************************
+ 7. Build HT1a and HTD1b
+**********************************/
+let HT1a = new Transaction(
+  [
+    new TxIn(
+      '', 
+      2, 
+      { 
+        type: 'HTLCT',
+        sig: [ 
+          getPubKeyHash(AliceKeys[4]), 
+          getPubKeyHash(BobKeys[4])
+        ],
+        sequence: 3 // 3 block confirmation time lock
+      }
+    )
+  ],
+  [
+    new TxOut(
+      10000000, 
+      { 
+        type: 'RSMS',
+        pubKeyHash: [ 
+          getPubKeyHash(AliceKeys[5]), 
+          getPubKeyHash(BobKeys[5]) 
+        ]
+      }
+    )
+  ]
+)
+
+let HTD1b = new Transaction(
+  [
+    new TxIn(
+      '', 
+      2, 
+      { 
+        type: 'HTLCT',
+        sig: [ 
+          getPubKeyHash(AliceKeys[4]), 
+          getPubKeyHash(BobKeys[4])
+        ],
+        sequence: 3 // 3 block confirmation time lock
+      }
+    )
+  ],
+  [
+    new TxOut(
+      10000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(AliceKeys[5])
+      }
+    )
+  ]
+)
+
+// Alice hand over HT1a to Bob and let him sign
+HT1a = signTx(HT1a, BobKeys[4]);
+
+// Alice hand over HTD1b to Bob and let him sign
+HTD1b = signTx(HTD1b, BobKeys[4]);
+
+
+/*********************************
+ 8. Build HED1a and HE1b
+**********************************/
+
+let HED1a = new Transaction(
+  [
+    new TxIn(
+      '', 
+      2, 
+      { 
+        type: 'HTLCE',
+        sig: [ 
+          getPubKeyHash(AliceKeys[4]), 
+          getPubKeyHash(BobKeys[4])
+        ],
+        preimageR // Bob answer required R
+      }
+    )
+  ],
+  [
+    new TxOut(
+      10000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(BobKeys[5])
+      }
+    )
+  ]
+)
+
+let HE1b = new Transaction(
+  [
+    new TxIn(
+      '', 
+      2, 
+      { 
+        type: 'HTLCE',
+        sig: [ 
+          getPubKeyHash(AliceKeys[4]), 
+          getPubKeyHash(BobKeys[4])
+        ],
+        preimageR // Bob answer required R
+      }
+    )
+  ],
+  [
+    new TxOut(
+      10000000, 
+      { 
+        type: 'RSMS',
+        pubKeyHash: [ 
+          getPubKeyHash(AliceKeys[5]), 
+          getPubKeyHash(BobKeys[5]) 
+        ]
+      }
+    )
+  ]
+)
+
+// Bob hand over HED1a to Alice and let her sign
+HED1a = signTx(HED1a, AliceKeys[4]);
+
+// Bob hand over HE1b to Alice and let her sign
+HE1b = signTx(HE1b, AliceKeys[4]);
+
+
+/*********************************
+ 9. Build HTRD1a and HERD1b
+**********************************/
+
+let HTRD1a = new Transaction(
+  [
+    new TxIn(
+      '', 
+      0, 
+      { 
+        type: 'RD',
+        sig: [ 
+          getPubKeyHash(AliceKeys[5]), 
+          getPubKeyHash(BobKeys[5])
+        ],
+        sequence: 10 // 10 block confirmation time lock
+      }
+    )
+  ],
+  [
+    new TxOut(
+      10000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(AliceKeys[6])
+      }
+    )
+  ]
+)
+
+let HERD1b = new Transaction(
+  [
+    new TxIn(
+      '', 
+      0, 
+      { 
+        type: 'RD',
+        sig: [ 
+          getPubKeyHash(AliceKeys[5]), 
+          getPubKeyHash(BobKeys[5])
+        ],
+        sequence: 10 // 10 block confirmation time lock
+      }
+    )
+  ],
+  [
+    new TxOut(
+      10000000, 
+      { 
+        type: 'NORMAL',
+        pubKeyHash: getPubKeyHash(BobKeys[6])
+      }
+    )
+  ]
+)
+
+// Alice hand over HTRD1a to Bob and let him sign
+HTRD1a = signTx(HTRD1a, BobKeys[5]);
+
+// Bob hand over HERD1b to Alice and let her sign
+HERD1b = signTx(HERD1b, AliceKeys[5]);
+
+/**************************************
+ 10. Exchange signature of C2a and C2b
+***************************************/
 
 // Alice hand over C2a to Bob, and let him sign
 C2a = signTx(C2a, BobKeys[1]);
@@ -348,90 +570,81 @@ C2b = signTx(C2b, AliceKeys[1]);
 
 
 /*************************************
- 8. Build BR1a and BR1b
+ 11. Build BR1a and BR1b
 **************************************/
-let BR1a = new Transaction(
-  [
-    new TxIn(
-      '', // Keep empty because C1a have not yet spent
-      0, 
-      { 
-        type: 'BR',
-        sig: [ 
-          getPubKeyHash(AliceKeys[2]), 
-          getPubKeyHash(BobKeys[2]) 
-        ],
-      }
-    )
-  ],
-  [
-    new TxOut(
-      50000000, 
-      { 
-        type: 'NORMAL',
-        pubKeyHash: getPubKeyHash(BobKeys[3]) // For Bob
-      }
-    )
-  ]
-)
-
-let BR1b = new Transaction(
-  [
-    new TxIn(
-      '', 
-      1, 
-      { 
-        type: 'BR',
-        sig: [ 
-          getPubKeyHash(AliceKeys[2]), 
-          getPubKeyHash(BobKeys[2]) 
-        ],
-      }
-    )
-  ],
-  [
-    new TxOut(
-      50000000, 
-      { 
-        type: 'NORMAL',
-        pubKeyHash: getPubKeyHash(AliceKeys[3]) // For Alice
-      }
-    )
-  ]
-)
-
-// Alice hand over signed BR1a to Bob. This output is for Bob
-BR1a = signTx(BR1a, AliceKeys[2]);
-
-// Bob hand over singed BR1b to Alice. This output is for Alice
-BR1b = signTx(BR1b, BobKeys[2]);
+// Skip. Please refer to 'spend-BR' branch
 
 
 /*************************************
- 9. Spend C1b
+ 12. Spend C2b
 **************************************/
 
 // Sign by himself(Bob)
-C1b = signTx(C1b, BobKeys[1]);
+C2b = signTx(C2b, BobKeys[1]);
 
 // Validate transaction
-validateTx(C1b, Blocks);
+validateTx(C2b, Blocks);
 
 // Mine block as adding transactions
-Blocks = mineBlock(Blocks, createNewBlock([C1b], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([C2b], Blocks));
+
+
+// /*************************************
+//  13. Spend HTD1b
+// **************************************/
+
+// // Set C2b transaction hash
+// HTD1b.txIns[0].txPrev = calculateTxHash(C2b);
+
+// HTD1b = signTx(HTD1b, AliceKeys[4]);
+
+// Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+// Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+// Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+
+// validateTx(HTD1b, Blocks);
+
+// Blocks.push( createNewBlock([HTD1b], Blocks) );
 
 
 /*************************************
- 10. Spend BR1b
+ 13. Spend HE1b
 **************************************/
 
-// Set C1b transaction hash
-BR1b.txIns[0].txPrev = calculateTxHash(C1b);
+// Set C2b transaction hash
+HE1b.txIns[0].txPrev = calculateTxHash(C2b);
 
-// Inherently, this Bitcoin is for Bob, but now belong to Alice.
-// Bob lose for his breach.
-BR1b = signTx(BR1b, AliceKeys[2]);
+HE1b = signTx(HE1b, BobKeys[4]);
 
-validateTx(BR1b, Blocks);
+validateTx(HE1b, Blocks);
 
-Blocks.push( createNewBlock([BR1a], Blocks) );
+Blocks.push( createNewBlock([HE1b], Blocks) );
+
+
+
+/*************************************
+ 14. Spend HERD1b
+**************************************/
+
+// Set HE1b transaction hash
+HERD1b.txIns[0].txPrev = calculateTxHash(HE1b);
+
+HERD1b = signTx(HERD1b, BobKeys[5]);
+
+// Wait 10 confirmations for time lock
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+Blocks = mineBlock(Blocks, createNewBlock([], Blocks));
+
+validateTx(HERD1b, Blocks);
+
+Blocks.push( createNewBlock([HERD1b], Blocks) );
+
+// console.log(JSON.stringify(HERD1b))
